@@ -1,8 +1,9 @@
 
 (function() {
-    function Sprite(url, pos, initLoc) {
+    function Sprite(url, pos, size, initLoc) {
         this.pos = pos;
         this.url = url;
+        this.size = size;
         this.initLoc = initLoc;
     };
 
@@ -14,7 +15,7 @@
 
 
             ctx.drawImage(resources.get(this.url), x, y);
-        }
+        },
     };
 
     window.Sprite = Sprite;
