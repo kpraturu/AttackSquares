@@ -35,6 +35,7 @@ var player = {
     size: 32 
 };
 
+//size = 36px
 var enemy = {
     pos: [564,444],
     sprite: new Sprite('img/Square.png', [0, 0]),
@@ -44,8 +45,7 @@ var enemy = {
 
 var bullets = [];
 
-//size = 36px
-var enemies = [];
+
 var updateCount = false;
 var count = [];
 
@@ -61,6 +61,8 @@ var enemySpeed = 200;
 // The main game loop
 var lastTime;
 var lastFire = Date.now();
+var lastMove = Date.now();
+var direction = [1,1];
 function main() {
     var now = Date.now();
     var dt = (now - lastTime) / 1000.0;
@@ -96,12 +98,12 @@ function update(dt) {
 
     handleInput(dt);
     updateEntities(dt);
-
+    enemyMovement(dt);
 
     checkCollisions();
     scoreEl.innerHTML = score;
 }
-var direction = [];
+
 function handleInput(dt) {
     if(input.isDown('DOWN') || input.isDown('s')) {
         player.pos[1] += playerSpeed * dt;
@@ -125,7 +127,7 @@ function handleInput(dt) {
 
     if(isMouseDown &&
        !isGameOver &&
-       Date.now() - lastFire > 300) {
+       Date.now() - lastFire > 1000) {
         var x = player.pos[0] ;
         var y = player.pos[1];
 
@@ -141,7 +143,6 @@ function handleInput(dt) {
     }
 }
 function updateEntities(dt) {
-
     // Update all the bullets
     for(var i=0; i<bullets.length; i++) {
         var bullet = bullets[i];
@@ -152,16 +153,16 @@ function updateEntities(dt) {
         bullet.pos[1] += (dy/mag) * bulletSpeed * dt;
 
         // Remove the bullet if it goes offscreen
-        if(bullet.pos[0] < 0 || bullet.pos[0] > canvas.width-14) {
-            if( bullet.pos[0] < 0) {
+        if(bullet.pos[0] < -14 || bullet.pos[0] > canvas.width-14) {
+            if( bullet.pos[0] < -14) {
                 mouseXPos[i] += 300;
             } else {
                 mouseXPos[i] = -mouseXPos[i];
             }
             updateCount = true;
         }
-        if (bullet.pos[1] < 0 || bullet.pos[1] > canvas.height - 14 ) {
-            if( bullet.pos[1] < 0) {
+        if (bullet.pos[1] < -14 || bullet.pos[1] > canvas.height - 14 ) {
+            if( bullet.pos[1] < -14) {
                 mouseYPos[i] += 240;
             } else {
                 mouseYPos[i] = -mouseYPos[i];
@@ -174,7 +175,6 @@ function updateEntities(dt) {
 
         }
         if(count[i] > 3) {
-            console.log(multiplier.length);
             bullets.splice(i, 1);
             mouseXPos.splice(i,1);
             mouseYPos.splice(i,1);
@@ -195,6 +195,8 @@ document.onmousedown = function(e) {
 document.onmouseup = function(e) {
     isMouseDown = false;
 }
+var xMove;
+var yMove;
 function checkBounds() {
     // Check bounds
     if(player.pos[0] < 0) {
@@ -212,24 +214,42 @@ function checkBounds() {
     }
 
     if(enemy.pos[0] < 0) {
-        player.pos[0] = 0;
+        enemy.pos[0] = 0;
+        xMove = -xMove;
     }
     else if(enemy.pos[0]+36 > canvas.width) {
         enemy.pos[0] = canvas.width - 36;
+        xMove = -xMove;
     }
 
     if(enemy.pos[1] < 0) {
         enemy.pos[1] = 0;
+        yMove = -yMove;
     }
     else if(enemy.pos[1] + 36 > canvas.height) {
-        enemy.pos[1] = canvas.height - 32;
+        enemy.pos[1] = canvas.height - 36;
+        yMove = -yMove;
     }
 
 }
+var flag = true;
+function enemyMovement(dt) {
+    if (flag) {
+        xMove = Math.floor(Math.random()*3)*enemySpeed-300;
+        yMove = Math.floor(Math.random()*3)*enemySpeed-300;
+        flag = false;
+    }
+    if(Date.now() - lastMove > 1500){
+        xMove = Math.floor(Math.random()*3)*enemySpeed-300;
+        yMove = Math.floor(Math.random()*3)*enemySpeed-300;
+        lastMove = Date.now();
+    }
+    console.log(xMove +","+ yMove);
+    enemy.pos[0] += xMove*dt;
+    enemy.pos[1] += yMove*dt;
 
-function enemyMovement() {
-    var xOff = direction[0];
-    var yOff = direction[1];
+
+    
 }
 
 function collides(x, y, r, b, x2, y2, r2, b2) {
@@ -248,25 +268,23 @@ function checkCollisions() {
     checkBounds();
 
     // Run collision detection for all enemies and bullets
-    for(var i=0; i<enemies.length; i++) {
-        var pos = enemies[i].pos;
-        var size = enemies[i].size;
+    var pos = enemy.pos;
+    var size = enemy.size;
+    for(var i=0; i<bullets.length; i++) {
 
-        for(var j=0; j<bullets.length; j++) {
+        var pos2 = bullets[i].pos;
+        var size2 = bullets[i].size;
+        if(boxCollides(pos, size, pos2, size2)) {
 
-            var pos2 = bullets[j].pos;
-            var size2 = bullets[j].size;
-            if(boxCollides(pos, size, pos2, size2)) {
-                // Remove the enemy
-                enemies.splice(i,1);
-
-                score+= 200 * multiplier[j];
-                // Remove the bullet and stop this iteration
-                bullets.splice(j, 1);
-                break;
-            }
+            score+= 20 * multiplier[i];
+            // Remove the bullet and stop this iteration
+            bullets.splice(i, 1);
+            mouseXPos.splice(i,1);
+            multiplier.splice(i,1);
+            break;
         }
     }
+    
 }
 
 // Draw everything
