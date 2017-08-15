@@ -244,7 +244,7 @@ function enemyMovement(dt) {
         yMove = Math.floor(Math.random()*3)*enemySpeed-300;
         lastMove = Date.now();
     }
-    console.log(xMove +","+ yMove);
+    //console.log(xMove +","+ yMove);
     enemy.pos[0] += xMove*dt;
     enemy.pos[1] += yMove*dt;
 
